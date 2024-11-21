@@ -62,6 +62,9 @@ type Raft struct {
 	// D5 for 2A
 	currentTerm int  // 当前任期
 	isLeader    bool // 是否为领导者
+	votedFor    int  // 投票给候选者peers[votedFor]
+	lastLogTerm int // 最后一条日志条目所处的任期
+	lastLogIndex int // 最后一条日志条目的索引
 }
 
 // return currentTerm and whether this server
@@ -136,10 +139,10 @@ type RequestVoteArgs struct {
 	// Your data here (2A, 2B).
 
 	// D5 for 2A
-	term         int // 候选人的任期
-	candidateId  int // 候选人的id
-	lastLogIndex int // 候选人最后一条日志条目的索引
-	lastLogTerm  int // 最后一条日志条目所处的任期
+	Term         int // 候选人的任期
+	CandidateId  int // 候选人的id
+	LastLogIndex int // 候选人最后一条日志条目的索引
+	LastLogTerm  int // 最后一条日志条目所处的任期
 }
 
 // example RequestVote RPC reply structure.
@@ -149,8 +152,8 @@ type RequestVoteReply struct {
 	// Your data here (2A).
 
 	// D5 for 2A
-	term        int  // 投票人的当前任期，给候选人更新任期用
-	voteGranted bool // 是否同意投票
+	Term        int  // 投票人的当前任期，给候选人更新任期用
+	VoteGranted bool // 是否同意投票
 }
 
 // example RequestVote RPC handler.
@@ -158,7 +161,16 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	// Your code here (2A, 2B).
 
 	// D5 for 2A
-
+	reply.Term = rf.currentTerm // 提供投票者当前任期
+	reply.VoteGranted = false
+	if rf.votedFor == -1 ||  rf.votedFor == args.CandidateId { // 如果没投票，或已投给当前候选者
+		if args.LastLogTerm > rf.lastLogTerm || // 如果候选者的最后一条日志条目任期大
+		(args.LastLogTerm == rf.lastLogTerm && args.LastLogIndex >= rf.lastLogIndex) { // 或任期相同时，日志更多 
+			rf.votedFor = args.CandidateId
+			reply.VoteGranted = true
+		}
+	}
+	reply.VoteGranted = false
 }
 
 // example code to send a RequestVote RPC to a server.
@@ -264,8 +276,10 @@ func Make(peers []*labrpc.ClientEnd, me int, persister *Persister, applyCh chan 
 	// Your initialization code here (2A, 2B, 2C).
 
 	// D5 for 2A
-	rf.currentTerm = 0 // 任期初始化为0
-	rf.isLeader = false // 初始化
+	rf.currentTerm = 0  // 任期初始化为0
+	rf.isLeader = false // 还不是领导者
+	rf.votedFor = -1  // 还没投票
+	rf.lastLogTerm = 0 // 还没有日志条目
 
 	// initialize from state persisted before a crash
 	rf.readPersist(persister.ReadRaftState())
