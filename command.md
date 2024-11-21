@@ -1,40 +1,14 @@
-////////////////////////////////
-cd 6.824/src/raft
-go test
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-////////////////////////////////
-map and reduce
-////////////////////////////////
-
-=======
 # raft
 // 进入路径
-cd 6.824/src/raft
+cd src/raft
+
 
 // 调试用，检测数据竞争问题
 go test -race
 
 // 测试
 go test
-
+go test -run 2A
 
 # map reduce
 cd 6.824/src/main

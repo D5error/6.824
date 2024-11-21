@@ -59,15 +59,22 @@ type Raft struct {
 	// Look at the paper's Figure 2 for a description of what
 	// state a Raft server must maintain.
 
+	// D5 for 2A
+	currentTerm int  // 当前任期
+	isLeader    bool // 是否为领导者
 }
 
 // return currentTerm and whether this server
 // believes it is the leader.
 func (rf *Raft) GetState() (int, bool) {
-
 	var term int
 	var isleader bool
 	// Your code here (2A).
+
+	// D5 for 2A
+	term = rf.currentTerm
+	isleader = rf.isLeader
+
 	return term, isleader
 }
 
@@ -127,17 +134,31 @@ func (rf *Raft) Snapshot(index int, snapshot []byte) {
 // field names must start with capital letters!
 type RequestVoteArgs struct {
 	// Your data here (2A, 2B).
+
+	// D5 for 2A
+	term         int // 候选人的任期
+	candidateId  int // 候选人的id
+	lastLogIndex int // 候选人最后一条日志条目的索引
+	lastLogTerm  int // 最后一条日志条目所处的任期
 }
 
 // example RequestVote RPC reply structure.
 // field names must start with capital letters!
+// 候选人请求投票后得到的响应
 type RequestVoteReply struct {
 	// Your data here (2A).
+
+	// D5 for 2A
+	term        int  // 投票人的当前任期，给候选人更新任期用
+	voteGranted bool // 是否同意投票
 }
 
 // example RequestVote RPC handler.
 func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	// Your code here (2A, 2B).
+
+	// D5 for 2A
+
 }
 
 // example code to send a RequestVote RPC to a server.
@@ -234,14 +255,17 @@ func (rf *Raft) ticker() {
 // tester or service expects Raft to send ApplyMsg messages.
 // Make() must return quickly, so it should start goroutines
 // for any long-running work.
-func Make(peers []*labrpc.ClientEnd, me int,
-	persister *Persister, applyCh chan ApplyMsg) *Raft {
+func Make(peers []*labrpc.ClientEnd, me int, persister *Persister, applyCh chan ApplyMsg) *Raft {
 	rf := &Raft{}
 	rf.peers = peers
 	rf.persister = persister
 	rf.me = me
 
 	// Your initialization code here (2A, 2B, 2C).
+
+	// D5 for 2A
+	rf.currentTerm = 0 // 任期初始化为0
+	rf.isLeader = false // 初始化
 
 	// initialize from state persisted before a crash
 	rf.readPersist(persister.ReadRaftState())
