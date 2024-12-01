@@ -8,7 +8,8 @@ go test -race
 
 // 测试
 go test
-go test -run 2A
+go test -race -run 2A
+go test -run 2B
 
 # map reduce
 cd 6.824/src/main
