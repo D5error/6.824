@@ -191,6 +191,10 @@ func (voter *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 
 	} else if args.Term > voter.currentTerm {
 		voter.currentTerm = args.Term // 更新投票者的term
+
+		// zgh for 2A
+		voter.votedFor = -1
+		voter.isLeader = false
 	}
 
 	// receiver implementation 2
@@ -265,14 +269,13 @@ func (follower *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntrie
 
 	reply.Term = follower.currentTerm
 
-	if follower.currentTerm > args.Term {
+	if args.Term < follower.currentTerm {
 		reply.Success = false
 		return
 	}
 
 	// fmt.Printf("term=%d: %d <--- %d\n", follower.currentTerm, follower.me, args.LeaderId)
 
-	//else -> follower.currentTerm <= args.Term
 	follower.resetTickerChan <- true
 	follower.isLeader = false // 变为跟随者
 	follower.hasLeader = true
@@ -341,7 +344,7 @@ func (rf *Raft) ticker() {
 		// time.Sleep().
 
 		// D5 for 2A
-		timeout := 150*time.Millisecond + time.Duration(rand.Int63()%150)*time.Millisecond
+		timeout := 150*time.Millisecond + time.Duration(rand.Int63()%250)*time.Millisecond
 		select {
 		case <-rf.resetTickerChan:
 			// fmt.Printf("term=%d, %d reset ticker\n", rf.currentTerm, rf.me)
@@ -507,8 +510,8 @@ func (rf *Raft) election() {
 		rf.hasLeader = true
 		rf.mu.Unlock()
 
-	//
-	case <-time.After(150*time.Millisecond + time.Duration(rand.Int63()%150)*time.Millisecond):
+	case <-time.After(150*time.Millisecond + time.Duration(rand.Intn(150))*time.Millisecond):
+	// case <-time.After(200*time.Millisecond + time.Duration(rand.Int63()%100)*time.Millisecond):
 		rf.mu.Lock()
 		rf.isLeader = false
 		rf.hasLeader = false
@@ -539,7 +542,6 @@ func Make(peers []*labrpc.ClientEnd, me int, persister *Persister, applyCh chan 
 	rf.votedFor = -1   // 还没投票
 	rf.logs = make([]LogEntry, 1)
 	rf.isLeader = false // 初始化为跟随者
-	// rf.isTimeoutChan = make(chan bool)
 	rf.resetTickerChan = make(chan bool)
 	rf.hasLeader = false
 
@@ -549,7 +551,5 @@ func Make(peers []*labrpc.ClientEnd, me int, persister *Persister, applyCh chan 
 	// start ticker goroutine to start elections
 	go rf.ticker()
 
-	// D5 for 2A
-	// go rf.election()
 	return rf
 }

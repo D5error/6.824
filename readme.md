@@ -1,3 +1,9 @@
+# Legend
+* zgh
+    * @2783952476
+* D5
+    * @1247054343
+
 # 6.824
 ## Raft
 * 英文链接：http://nil.csail.mit.edu/6.824/2022/labs/lab-raft.html
